@@ -7,19 +7,19 @@
 
 class InetAddress {
 public:
-    explicit InetAddress(uint16_t port = 0, bool loopback = false, bool ipv6 = false);
-    InetAddress(const std::string& ip, uint16_t port, bool ipv6 = false);
+    explicit InetAddress(uint16_t port = 0, bool loopback = false);
+    InetAddress(const std::string& ip, uint16_t port);
 
     explicit InetAddress(const struct sockaddr_in& addr);
-    explicit InetAddress(const struct sockaddr_in6& addr);
+
+    const struct sockaddr* getSockAddr() const;
+
+    void setSockAddr(struct sockaddr_in& addr);
 
     std::string getIpStr() const;
 
 private:
-    union {
-        struct sockaddr_in m_addr;
-        struct sockaddr_in6 m_addr6;
-    };
+    struct sockaddr_in m_addr;
 };
 
 #endif // INETADDRESS_H
