@@ -15,7 +15,7 @@ Socket::~Socket()
 
 void Socket::bind(const InetAddress& localaddr) 
 {
-    sockets::bind(m_sockfd, localaddr.getSockAddr());
+    sockets::bind(m_sockfd, (sockaddr*)localaddr.getSockAddr());
 }
 
 void Socket::listen() const 

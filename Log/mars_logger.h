@@ -10,7 +10,7 @@
 #include <fmt/core.h>
 #include <unordered_map>
 
-#define LOG_CONFIG_PATH "./logconf.json"
+#define LOG_CONFIG_PATH "../Log/logconf.json"
 #define RED "\033[31m"
 #define GREEN "\033[32m"
 #define YELLOW "\033[33m"
