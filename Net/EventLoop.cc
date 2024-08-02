@@ -3,6 +3,8 @@
 #include <cassert>
 #include <poll.h>
 
+using namespace mars::net;
+
 __thread EventLoop* t_loopInThisThread = nullptr;
 
 EventLoop::EventLoop() : m_looping(false), m_threadId(gettid()) {
