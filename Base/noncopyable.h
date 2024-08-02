@@ -1,5 +1,9 @@
-#ifndef NONCOPYABLE_H
-#define NONCOPYABLE_H
+// Created by mars on 2/8/24.
+
+#ifndef MARS_BASE_NONCOPYABLE_H
+#define MARS_BASE_NONCOPYABLE_H
+
+namespace mars {
 
 struct base_token {};
 
@@ -12,4 +16,6 @@ protected:
     noncopyable& operator=(const noncopyable&) = delete;
 };
 
-#endif // NONCOPYABLE_H
+} // namespace mars
+
+#endif // MARS_BASE_NONCOPYABLE_H
