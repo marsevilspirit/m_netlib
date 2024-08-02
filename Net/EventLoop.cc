@@ -1,5 +1,6 @@
 #include "EventLoop.h"
 #include "../Log/mars_logger.h"
+#include "TimerQueue.h"
 #include "Poller.h"
 #include "Channel.h"
 #include <assert.h>
@@ -12,9 +13,10 @@ const int kPollTimeMs = 10000;
 
 EventLoop::EventLoop() 
   : m_looping(false), 
+    m_quit(false),
     m_threadId(gettid()), 
     m_poller(new Poller(this)), 
-    m_quit(false)
+    m_timerQueue(new TimerQueue(this))
 {
     LogTrace("EventLoop created {} in thread {}", (void*)this, m_threadId);
     if (t_loopInThisThread) {
@@ -66,4 +68,18 @@ void EventLoop::updateChannel(Channel* channel) {
     assert(channel->ownerLoop() == this);
     assertInLoopThread();
     m_poller->updateChannel(channel);
+}
+
+TimerId EventLoop::runAt(const Timestamp& time, const TimerCallback& cb){
+    return m_timerQueue->addTimer(cb, time, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, const TimerCallback& cb){
+    Timestamp time(addTime(Timestamp::now(), delay));
+    return runAt(time, cb);
+}
+
+TimerId EventLoop::runEvery(double interval, const TimerCallback& cb){
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return m_timerQueue->addTimer(cb, time, interval);
 }

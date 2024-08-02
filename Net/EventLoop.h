@@ -4,18 +4,24 @@
 #define MARS_NET_EVENTLOOP_H
 
 #include "../Base/noncopyable.h"
+#include "../Base/Timestamp.h"
+#include "Callbacks.h"
+#include "TimerId.h"
 
 #include <thread>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <memory>
 #include <vector>
+#include <functional>
 
 namespace mars {
 namespace net {
 
 class Channel;
 class Poller;
+class TimerId;
+class TimerQueue;
 
 class EventLoop : noncopyable {
 public:
@@ -38,6 +44,10 @@ public:
 
     void updateChannel(Channel* channel);
 
+    TimerId runAt(const Timestamp& time, const TimerCallback& cb);
+    TimerId runAfter(double delay, const TimerCallback& cb);
+    TimerId runEvery(double interval, const TimerCallback& cb);
+
 private:
     void abortNotInLoopThread();
 
@@ -47,6 +57,7 @@ private:
     bool m_quit;
     const pid_t m_threadId;
     std::unique_ptr<Poller> m_poller;
+    std::unique_ptr<TimerQueue> m_timerQueue;
     ChannelList m_activeChannels;
 };
 
