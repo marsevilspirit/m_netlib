@@ -4,12 +4,18 @@
 #define MARS_NET_EVENTLOOP_H
 
 #include "../Base/noncopyable.h"
+
 #include <thread>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <memory>
+#include <vector>
 
 namespace mars {
 namespace net {
+
+class Channel;
+class Poller;
 
 class EventLoop : noncopyable {
 public:
@@ -17,6 +23,8 @@ public:
     ~EventLoop();
 
     void loop();
+
+    void quit();
 
     void assertInLoopThread() {
         if (!isInLoopThread()) {
@@ -28,11 +36,18 @@ public:
 
     static EventLoop* getEventLoopOfCurrentThread();
 
+    void updateChannel(Channel* channel);
+
 private:
     void abortNotInLoopThread();
 
+    typedef std::vector<Channel*> ChannelList;
+
     bool m_looping;
+    bool m_quit;
     const pid_t m_threadId;
+    std::unique_ptr<Poller> m_poller;
+    ChannelList m_activeChannels;
 };
 
 } // namespace net
