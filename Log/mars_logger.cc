@@ -62,20 +62,20 @@ void MarsLogger::initLogConfig () {
     return;
 }
 
-std::string MarsLogger::LogHead (LogLevel lvl, const char *file_name, const char *func_name, int line_no) {
-    if (!loggerConfig.details && !loggerConfig.time) {
-        return fmt::format("{:5} ", getLogLevelStr(lvl));
-    }
-
-    if (!loggerConfig.details) {
-        return fmt::format("[{}] {:5} ", getLogOutPutTime(), getLogLevelStr(lvl));
-    }
-
+std::string MarsLogger::LogHead (LogLevel lvl) {
     if (!loggerConfig.time) {
-        return fmt::format("[{} {}:{}] {:5} ", file_name, func_name, line_no, getLogLevelStr(lvl));
+        return fmt::format("[{:5}] ", getLogLevelStr(lvl));
     }
 
-    return fmt::format("[{} {} {}:{}] {:5} ", getLogOutPutTime(), file_name, func_name, line_no, getLogLevelStr(lvl));
+    return fmt::format("[{}][{:5}] ", getLogOutPutTime(), getLogLevelStr(lvl));
+}
+
+std::string MarsLogger::LogDetail(const char *file_name, const char *func_name, int line_no) {
+    if (!loggerConfig.details) {
+        return "";
+    }
+
+    return fmt::format(" - [{} {}:{}]", file_name, func_name, line_no);
 }
 
 bool MarsLogger::createFile(const std::string& path, const std::string& fileName) {
@@ -118,17 +118,23 @@ bool MarsLogger::ifTerminalOutPut (LogLevel terminal_log_level) {
 
 //得到log文件名的时间部分
 std::string MarsLogger::getLogFileNameTime() {
-    std::time_t time = std::time(nullptr);
-    char timeString[20];
-    strftime(timeString, sizeof(timeString), "%Y-%m-%d-%H:%M:%S",localtime(&time));
-    return timeString;
+    std::time_t now = std::time(nullptr);
+    std::tm tm_buf;
+    localtime_r(&now, &tm_buf);
+
+    std::array<char, 20> timeString;
+    strftime(timeString.data(), timeString.size(), "%Y-%m-%d-%H:%M:%S", &tm_buf);
+    return std::string(timeString.data());
 }
 
 std::string MarsLogger::getLogOutPutTime() {
-    std::time_t time = std::time(nullptr);
-    char timeString[20];
-    strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S",localtime(&time));
-    return timeString;
+    std::time_t now = std::time(nullptr);
+    std::tm tm_buf;
+    localtime_r(&now, &tm_buf);
+
+    std::array<char, 20> timeString;
+    strftime(timeString.data(), timeString.size(), "%Y-%m-%d %H:%M:%S", &tm_buf);
+    return std::string(timeString.data());
 }
 
 void MarsLogger::bindFileOutPutLevelMap(const std::string& levels) {
@@ -148,3 +154,4 @@ void MarsLogger::bindTerminalOutPutLevelMap(const std::string& levels) {
     terminalCoutMap[LogLevel::ERROR] = levels.find("1") != std::string::npos;
     terminalCoutMap[LogLevel::FATAL] = levels.find("0") != std::string::npos;
 }
+

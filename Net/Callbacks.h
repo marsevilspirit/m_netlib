@@ -6,18 +6,23 @@
 #include "../Base/Timestamp.h"
 
 #include <functional>
+#include <memory>
 
 namespace mars{
 
-using base::Timestamp;
-using std::placeholders::_1;
-using std::placeholders::_2;
-using std::placeholders::_3;
+class InetAddress;
 
 namespace net{
 // All client visible callbacks go here.
 
+class TcpConnection;
+typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
+
 typedef std::function<void()> TimerCallback;
+typedef std::function<void()> Functor;
+typedef std::function<void(int sockfd, const InetAddress&)> NewConnectionCallback;
+typedef std::function<void(const TcpConnectionPtr&)> ConnectionCallback;
+typedef std::function<void(const TcpConnectionPtr&, const char* data, ssize_t len)> MessageCallback;
 
 }
 }

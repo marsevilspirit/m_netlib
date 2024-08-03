@@ -35,7 +35,7 @@ struct timespec howMuchTimeFromNow(Timestamp when){
 void readTimerfd(int timerfd, Timestamp now){// 读取 timerfd 的数据, 以免一直触发
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof(howmany));
-    LogTrace("TimerQueue::readTimerfd() %lu at %s", howmany, now.toString().c_str());
+    LogTrace("TimerQueue::readTimerfd() {} at {}", howmany, now.toString().c_str());
     if(n != sizeof(howmany)){
         LogError("TimerQueue::readTimerfd() reads %lu bytes instead of 8", n);
     }
@@ -73,14 +73,19 @@ TimerQueue::TimerQueue(EventLoop* loop)
 
 TimerId TimerQueue::addTimer(const TimerCallback cb, Timestamp when, double interval){
     Timer* timer = new Timer(cb, when, interval);
+
+    m_loop->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
+
+    return TimerId(timer);
+}
+
+void TimerQueue::addTimerInLoop(Timer* timer) {
     m_loop->assertInLoopThread();
     bool earliestChanged = insert(timer);
 
     if(earliestChanged){
         resetTimerfd(m_timerfd, timer->expiration());
     }
-
-    return TimerId(timer);
 }
 
 void TimerQueue::handleRead(){

@@ -34,7 +34,6 @@ Timestamp Poller::poll(int timeoutMS, ChannelList* activeChannels){
 void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) const
 {
     for(auto pfd = m_pollfds.begin(); pfd != m_pollfds.end() && numEvents > 0; ++pfd){
-        LogTrace("revents = {}", pfd->revents);
         if(pfd->revents > 0){
             --numEvents;
             auto ch = m_channels.find(pfd->fd);
@@ -48,14 +47,12 @@ void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) cons
 
 void Poller::updateChannel(Channel* channel){
     assertInLoopThread();
-    LogTrace("fd = {} events = {}", channel->fd(), channel->events());
     if (channel->index() < 0){
         assert(m_channels.find(channel->fd()) == m_channels.end());
         struct pollfd pfd;
         pfd.fd = channel->fd();
         pfd.events = static_cast<short>(channel->events());
         pfd.revents = 0;
-        LogTrace("fd = {} events = {} revents = {}", channel->fd(), channel->events(), pfd.revents);
         m_pollfds.push_back(pfd);
         int idx = static_cast<int>(m_pollfds.size()) - 1;
         channel->set_index(idx);

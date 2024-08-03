@@ -14,6 +14,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <mutex>
 
 namespace mars {
 namespace net {
@@ -32,6 +33,8 @@ public:
 
     void quit();
 
+    void wakeup();
+
     void assertInLoopThread() {
         if (!isInLoopThread()) {
             abortNotInLoopThread();
@@ -44,12 +47,17 @@ public:
 
     void updateChannel(Channel* channel);
 
-    TimerId runAt(const Timestamp& time, const TimerCallback& cb);
+    TimerId runAt(const base::Timestamp& time, const TimerCallback& cb);
     TimerId runAfter(double delay, const TimerCallback& cb);
     TimerId runEvery(double interval, const TimerCallback& cb);
 
+    void runInLoop(const Functor& cb);
+    void queueInLoop(const Functor& cb);
+
 private:
     void abortNotInLoopThread();
+    void handleRead();
+    void doPendingFunctors();
 
     typedef std::vector<Channel*> ChannelList;
 
@@ -59,6 +67,12 @@ private:
     std::unique_ptr<Poller> m_poller;
     std::unique_ptr<TimerQueue> m_timerQueue;
     ChannelList m_activeChannels;
+    bool m_callingPendingFunctors;
+    base::Timestamp m_pollReturnTime;
+    std::vector<Functor> m_pendingFunctors;
+    int m_wakeupFd;
+    std::unique_ptr<Channel> m_wakeupChannel;
+    std::mutex m_mutex;
 };
 
 } // namespace net

@@ -3,6 +3,8 @@
 
 #include "InetAddress.h"
 
+namespace mars{
+
 class Socket {
 public:
     explicit Socket(int sockfd);
@@ -10,19 +12,16 @@ public:
 
     int fd() const { return m_sockfd; }
 
-    void bind(const InetAddress& localaddr);
+    void bindAddress(const InetAddress& localaddr);
     void listen() const;
     int accept(InetAddress* peeraddr);
 
-    void shutdownWrite();
-
-    void setTcpNoDelay(bool on);
-    void setKeepAlive(bool on);
     void setReuseAddr(bool on) const;
-    void setReusePort(bool on) const;
 
 private:
     const int m_sockfd;
 };
+
+} // namespace mars
 
 #endif // SOCKET_H

@@ -5,20 +5,25 @@
 #include <netinet/in.h>
 #include <string.h>
 
+namespace mars {
+
 class InetAddress {
 public:
-    InetAddress(uint16_t port, const std::string& ip = "127.0.0.1");
+    explicit InetAddress(uint16_t port);
 
-    std::string getIpStr() const;
+    InetAddress(const struct sockaddr_in& addr) : m_addr(addr) {}
 
-    std::string getPortStr() const;
+    InetAddress(const std::string& ip, uint16_t port);
 
-    std::string getIpPortStr() const;
-    
-    const sockaddr_in* getSockAddr() const { return &m_addr; }
+    const struct sockaddr_in& getSockAddrInet() const { return m_addr; }
+    void setSockAddrInet(const struct sockaddr_in& addr) { m_addr = addr; } 
+
+    std::string toHostPort() const;
 
 private:
     struct sockaddr_in m_addr;
 };
+
+} // namespace mars
 
 #endif // INETADDRESS_H

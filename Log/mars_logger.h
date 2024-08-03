@@ -9,6 +9,9 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <unordered_map>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 
 #define LOG_CONFIG_PATH "../Log/logconf.json"
 #define RED "\033[31m"
@@ -36,13 +39,14 @@ struct LoggerConfig {
 class MarsLogger {
 public:
     void initLogConfig();
-    std::string LogHead(LogLevel lvl, const char *file_name, const char *func_name, int line_no);
     bool ifFileOutPut(LogLevel fileLogLevel);
     bool ifTerminalOutPut(LogLevel terminalLogLevel);
     std::string getLogFileNameTime();
     std::string getLogOutPutTime();
     std::string getLogFileName() {return loggerConfig.logFileName;}
     static MarsLogger* getInstance();
+    std::string LogHead(LogLevel lvl);
+    std::string LogDetail(const char *file_name, const char *func_name, int line_no);
     void bindFileOutPutLevelMap(const std::string& levels);
     void bindTerminalOutPutLevelMap(const std::string& levels);
     bool createFile(const std::string& path, const std::string& fileName);
@@ -70,7 +74,7 @@ public:
             return;
         }
 
-        std::string log = LogHead(level, file_name, func_name, line_no) + fmt::format(fmt, args...);
+        std::string log = LogHead(level) + fmt::format(fmt, args...) + LogDetail(file_name, func_name, line_no);
 
         {
             std::lock_guard<std::mutex> lock(log_mutex); // 加锁以确保线程安全
@@ -107,11 +111,12 @@ private:
 
 }
 
-#define LogInfo(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::INFO, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__)
-#define LogWarn(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::WARN, YELLOW fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__)
-#define LogError(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::ERROR, RED fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__)
-#define LogFatal(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::FATAL, RED fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__)
-#define LogDebug(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::DEBUG, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__)
-#define LogTrace(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::TRACE, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__)
+#define LogInfo(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::INFO, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogWarn(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::WARN, YELLOW fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogError(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::ERROR, RED fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogFatal(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::FATAL, RED fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogDebug(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::DEBUG, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogTrace(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::TRACE, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
 
 #endif
+
