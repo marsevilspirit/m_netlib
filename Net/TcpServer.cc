@@ -2,6 +2,8 @@
 #include "../Log/mars_logger.h"
 #include "../Socket/SocketOps.h"
 
+#include <assert.h>
+
 using namespace mars;
 using namespace mars::net;
 
@@ -48,5 +50,14 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr){
     m_connections[connName] = conn;
     conn->setConnectionCallback(m_connectionCallback);
     conn->setMessageCallback(m_messageCallback);
+    conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
     conn->connectEstablished();
+}
+
+void TcpServer::removeConnection(const TcpConnectionPtr& conn){
+    m_loop->assertInLoopThread();
+    LogInfo("TcpServer::removeConnection [{}] - connection {}", m_name, conn->name());
+    size_t n = m_connections.erase(conn->name());
+    assert(n == 1); (void)n; // n 未使用
+    m_loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, conn));
 }

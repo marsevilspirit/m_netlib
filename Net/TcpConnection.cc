@@ -1,6 +1,7 @@
 #include "TcpConnection.h"
 #include "Channel.h"
 #include "../Log/mars_logger.h"
+#include "../Socket/SocketOps.h"
 
 #include <assert.h>
 
@@ -18,10 +19,25 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name, int sockf
 {
     LogInfo("TcpConnection::ctor[{}] at {} fd = {}", m_name, m_localAddr.toHostPort(), sockfd);
     m_channel->setReadCallback(std::bind(&TcpConnection::handleRead, this));
+    m_channel->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
+    m_channel->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 }
 
 TcpConnection::~TcpConnection(){
     LogInfo("TcpConnection::dtor[{}] at {} fd = {}", m_name, m_localAddr.toHostPort(), m_channel->fd());
+}
+
+void TcpConnection::connectDestroyed(){
+    m_loop->assertInLoopThread();
+
+    LogTrace("m_state = {}", static_cast<int>(m_state));
+
+    assert(m_state == KConnected);
+    setState(KDisconnected);
+    m_channel->disableAll();
+    m_connectionCallback(shared_from_this());
+
+    m_loop->removeChannel(m_channel.get());
 }
 
 void TcpConnection::connectEstablished(){
@@ -40,10 +56,23 @@ void TcpConnection::handleRead(){
         m_messageCallback(shared_from_this(), buf, n);
     }
     else if (n == 0){
-        ::close(m_channel->fd());
-        LogInfo("TcpConnection::handleRead - connection [{}] is down", m_name);
+        handleClose();
     } else {
-        ::close(m_channel->fd());
-        LogError("TcpConnection::handleRead - connection [{}] error", m_name);
+        handleError();
     }
+}
+
+void TcpConnection::handleClose(){
+    m_loop->assertInLoopThread();
+    assert(m_state == KConnected);
+    LogInfo("enter TcpConnection::handleClose [{}] - SO_ERROR = 0", m_name);
+    m_channel->disableAll();
+    LogTrace("disableAll() done");
+    m_closeCallback(shared_from_this());
+    LogTrace("closeCallback() done");
+}
+
+void TcpConnection::handleError(){
+    int err = sockets::getSocketError(m_channel->fd());
+    LogError("TcpConnection::handleError [{}] - SO_ERROR = {} {}", m_name, err, strerror(err));
 }

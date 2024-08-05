@@ -47,6 +47,8 @@ public:
 
     void updateChannel(Channel* channel);
 
+    void removeChannel(Channel* channel);
+
     TimerId runAt(const base::Timestamp& time, const TimerCallback& cb);
     TimerId runAfter(double delay, const TimerCallback& cb);
     TimerId runEvery(double interval, const TimerCallback& cb);

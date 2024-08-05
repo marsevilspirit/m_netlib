@@ -47,6 +47,9 @@ void Poller::fillActiveChannels(int numEvents, ChannelList* activeChannels) cons
 
 void Poller::updateChannel(Channel* channel){
     assertInLoopThread();
+
+    LogTrace("updateChannel() fd = {} index = {}", channel->fd(), channel->index());
+
     if (channel->index() < 0){
         assert(m_channels.find(channel->fd()) == m_channels.end());
         struct pollfd pfd;
@@ -67,7 +70,32 @@ void Poller::updateChannel(Channel* channel){
         pfd.events = static_cast<short>(channel->events());
         pfd.revents = 0;
         if(channel->isNoneEvent()){
-            pfd.fd = -channel->fd() - 1;
+            pfd.fd = -channel->fd() - 1; // 我的理解是方便之后删除
         }
+    }
+}
+
+void Poller::removeChannel(Channel* channel){
+    assertInLoopThread();
+    LogTrace("removeChannel() fd = {}", channel->fd());
+    assert(m_channels.find(channel->fd()) != m_channels.end());
+    assert(m_channels[channel->fd()] == channel);
+    assert(channel->isNoneEvent());
+    int idx = channel->index();
+    assert(0 <= idx && idx < static_cast<int>(m_pollfds.size()));
+    const struct pollfd& pfd = m_pollfds[idx]; (void) pfd;
+    assert(pfd.fd == -channel->fd() - 1 || pfd.events == channel->events());
+    size_t n = m_channels.erase(channel->fd());
+    assert(n == 1); (void) n;
+    if(static_cast<size_t>(idx) == m_pollfds.size() - 1){
+        m_pollfds.pop_back();
+    }else{
+        int channelAtEnd = m_pollfds.back().fd;
+        iter_swap(m_pollfds.begin() + idx, m_pollfds.end() - 1);
+        if(channelAtEnd < 0){
+            channelAtEnd = -channelAtEnd - 1;
+        }
+        m_channels[channelAtEnd]->set_index(idx);
+        m_pollfds.pop_back();
     }
 }

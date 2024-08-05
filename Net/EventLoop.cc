@@ -97,6 +97,12 @@ void EventLoop::updateChannel(Channel* channel) {
     m_poller->updateChannel(channel);
 }
 
+void EventLoop::removeChannel(Channel* channel) {
+    assert(channel->ownerLoop() == this);
+    assertInLoopThread();
+    m_poller->removeChannel(channel);
+}
+
 // 在指定时间执行回调
 TimerId EventLoop::runAt(const base::Timestamp& time, const TimerCallback& cb){
     return m_timerQueue->addTimer(cb, time, 0.0);
@@ -125,6 +131,8 @@ void EventLoop::runInLoop(const Functor& cb) {
 
 // 将任务放回loop线程执行
 void EventLoop::queueInLoop(const Functor& cb) {
+    LogTrace("queueInLoop");
+
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_pendingFunctors.push_back(cb);
@@ -150,6 +158,7 @@ void EventLoop::doPendingFunctors(){
     }
 
     for(auto& functor : functors){
+        LogTrace("doing functor");
         functor();
     }
 

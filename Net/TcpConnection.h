@@ -25,13 +25,19 @@ public:
 
     void setConnectionCallback(const ConnectionCallback& cb){ m_connectionCallback = cb;}
     void setMessageCallback(const MessageCallback& cb){ m_messageCallback = cb;}
+    void setCloseCallback(const CloseCallback& cb){ m_closeCallback = cb;}
 
     void connectEstablished();
+
+    void connectDestroyed();
 private:
-    enum StateE { kConnecting, KConnected };
+    enum StateE { kConnecting, KConnected, KDisconnected };
 
     void setState(StateE s){ m_state = s;}
     void handleRead();
+    void handleWrite();
+    void handleClose();
+    void handleError();
 
     EventLoop* m_loop;
     std::string m_name;
@@ -42,6 +48,7 @@ private:
     InetAddress m_peerAddr;
     ConnectionCallback m_connectionCallback;
     MessageCallback m_messageCallback;
+    CloseCallback m_closeCallback;
 };
 
 } //namespace net
