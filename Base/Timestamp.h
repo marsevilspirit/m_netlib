@@ -15,6 +15,7 @@ public:
     explicit Timestamp(int64_t microSecondsSinceEpoch) : m_microSecondsSinceEpoch(microSecondsSinceEpoch) {}
 
     std::string toString() const;
+      std::string toFormattedString() const;
 
     int64_t microSecondsSinceEpoch() const { return m_microSecondsSinceEpoch; }
     time_t secondsSinceEpoch() const { return static_cast<time_t>(m_microSecondsSinceEpoch / kMicroSecondsPerSecond); }

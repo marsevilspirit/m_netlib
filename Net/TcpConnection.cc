@@ -18,7 +18,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name, int sockf
       m_peerAddr(peerAddr)
 {
     LogInfo("TcpConnection::ctor[{}] at {} fd = {}", m_name, m_localAddr.toHostPort(), sockfd);
-    m_channel->setReadCallback(std::bind(&TcpConnection::handleRead, this));
+    m_channel->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
     m_channel->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
     m_channel->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 }
@@ -48,16 +48,18 @@ void TcpConnection::connectEstablished(){
     m_connectionCallback(shared_from_this());
 }
 
-void TcpConnection::handleRead(){
-    char buf[65536];
-    ssize_t n = ::read(m_channel->fd(), buf, sizeof(buf));
+void TcpConnection::handleRead(base::Timestamp receiveTime){
+    int savedErrno = 0;
+    ssize_t n = m_inputBuffer.readFd(m_channel->fd(), &savedErrno);
 
     if (n > 0){
-        m_messageCallback(shared_from_this(), buf, n);
+        m_messageCallback(shared_from_this(), &m_inputBuffer, receiveTime);
     }
     else if (n == 0){
         handleClose();
     } else {
+        errno = savedErrno;
+        LogError("TcpConnection::handleRead [{}] - SO_ERROR = {} {}", m_name, savedErrno, strerror(savedErrno));
         handleError();
     }
 }

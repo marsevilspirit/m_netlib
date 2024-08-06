@@ -18,6 +18,8 @@ namespace sockets{
 
     struct sockaddr_in getLocalAddr(int sockfd);
 
+    int getSocketError(int sockfd);
+
 } // namespace sockets
 } // namespace mars
 

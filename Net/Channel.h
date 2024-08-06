@@ -4,6 +4,7 @@
 #define MARS_NET_CHANNEL_H
 
 #include "../Base/noncopyable.h"
+#include "../Base/Timestamp.h"
 #include <functional>
 
 namespace mars {
@@ -14,12 +15,13 @@ class EventLoop;
 class Channel : noncopyable {
 public:
     typedef std::function<void()> EventCallback;
+    typedef std::function<void(base::Timestamp)> ReadEventCallback;
 
     Channel(EventLoop* loop, int fd);
     ~Channel();
 
-    void handleEvent();
-    void setReadCallback(const EventCallback& cb) { m_readCallback = cb; }
+    void handleEvent(base::Timestamp receiveTime);
+    void setReadCallback(const ReadEventCallback& cb) { m_readCallback = cb; }
     void setWriteCallback(const EventCallback& cb) { m_writeCallback = cb; }
     void setErrorCallback(const EventCallback& cb) { m_errorCallback = cb; }
     void setCloseCallback(const EventCallback& cb) { m_closeCallback = cb; }
@@ -30,10 +32,10 @@ public:
     bool isNoneEvent() const { return m_events == kNoneEvent; }
 
     void enableReading() { m_events |= kReadEvent; update(); }
-    //void enableWriting() { m_events |= kWriteEvent; update(); }
-    //void disableReading() { m_events &= ~kReadEvent; update(); }
-    //void disableWriting() { m_events &= ~kWriteEvent; update(); }
+    void enableWriting() { m_events |= kWriteEvent; update(); }
+    void disableWriting() { m_events &= ~kWriteEvent; update(); }
     void disableAll() { m_events = kNoneEvent; update(); }
+    bool isWriting() const { return m_events & kWriteEvent; }
 
     // for Poller
     int index() { return m_index; }
@@ -53,7 +55,7 @@ private:
     static const int kReadEvent;
     static const int kWriteEvent;
 
-    EventCallback m_readCallback;
+    ReadEventCallback m_readCallback;
     EventCallback m_writeCallback;
     EventCallback m_errorCallback;
     EventCallback m_closeCallback;

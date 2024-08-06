@@ -34,7 +34,7 @@ private:
     enum StateE { kConnecting, KConnected, KDisconnected };
 
     void setState(StateE s){ m_state = s;}
-    void handleRead();
+    void handleRead(base::Timestamp receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
@@ -49,6 +49,7 @@ private:
     ConnectionCallback m_connectionCallback;
     MessageCallback m_messageCallback;
     CloseCallback m_closeCallback;
+    Buffer m_inputBuffer;
 };
 
 } //namespace net

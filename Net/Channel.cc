@@ -27,7 +27,7 @@ void Channel::update(){
     m_loop->updateChannel(this);// EventLoop.h 中的 updateChannel
 }
 
-void Channel::handleEvent(){
+void Channel::handleEvent(base::Timestamp receiveTime){
     m_eventHandling = true;
 
     if(m_revents & POLLNVAL){
@@ -46,7 +46,7 @@ void Channel::handleEvent(){
 
     if(m_revents & (POLLIN | POLLPRI | POLLRDHUP)){
         LogInfo("Channel::handleEvent() POLLIN | POLLPRI | POLLRDHUP");// 有数据可读
-        if(m_readCallback) m_readCallback();
+        if(m_readCallback) m_readCallback(receiveTime);
     }
 
     if(m_revents & POLLOUT){
