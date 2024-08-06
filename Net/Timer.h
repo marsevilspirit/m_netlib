@@ -7,6 +7,8 @@
 #include "Callbacks.h"
 #include "../Base/Timestamp.h"
 
+#include <atomic>
+
 namespace mars{
 
 using base::Timestamp;
@@ -19,13 +21,15 @@ public:
       :  m_cb(std::move(cb)),
          m_expiration(when),
          m_interval(interval),
-         m_repeat(interval > 0.0)
+         m_repeat(interval > 0.0),
+         m_sequence(++s_numCreated)
     {}
 
     void run() const {m_cb();}
 
     Timestamp expiration() const { return m_expiration; }
     bool repeat() const { return m_repeat; }
+    int64_t sequence() const { return m_sequence; }
 
     void restart(Timestamp now);
 
@@ -34,6 +38,9 @@ private:
     Timestamp m_expiration;
     const double m_interval;
     const bool m_repeat;
+    const int64_t m_sequence;
+
+    static std::atomic<int64_t> s_numCreated;
 };
 
 } // namespace net

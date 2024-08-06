@@ -13,10 +13,17 @@ class Timer;
 
 class TimerId : public base::copyable{
 public:
-    explicit TimerId(Timer* timer) : m_timer(timer){}
+    TimerId(Timer* timer = nullptr, int64_t seq = 0)
+        : m_timer(timer),
+          m_seq(seq)
+    {
+    }
+
+    friend class TimerQueue;
 
 private:
     Timer* m_timer;
+    int64_t m_seq;
 };
 
 }

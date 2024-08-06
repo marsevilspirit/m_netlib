@@ -54,6 +54,10 @@ void sockets::close(int sockfd) {
     }
 }
 
+int sockets::connect(int sockfd, const struct sockaddr_in& addr) {
+    return ::connect(sockfd, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr));
+}
+
 void sockets::setNonBlockAndCloseOnExec(int sockfd) {
     int flags = ::fcntl(sockfd, F_GETFL, 0);
     flags |= O_NONBLOCK;
@@ -74,6 +78,16 @@ struct sockaddr_in sockets::getLocalAddr(int sockfd) {
     return localAddr;
 }
 
+struct sockaddr_in sockets::getPeerAddr(int sockfd) {
+    struct sockaddr_in peerAddr;
+    memset(&peerAddr, 0, sizeof(peerAddr));
+    socklen_t addrlen = sizeof(peerAddr);
+    if (::getpeername(sockfd, reinterpret_cast<struct sockaddr*>(&peerAddr), &addrlen) < 0) {
+        LogError("getpeername error");
+    }
+    return peerAddr;
+}
+
 int sockets::getSocketError(int sockfd){
     int optval;
     socklen_t optlen = sizeof(optval);
@@ -82,4 +96,16 @@ int sockets::getSocketError(int sockfd){
     } else {
         return optval;
     }
+}
+
+void sockets::shutdownWrite(int sockfd) {
+    if (::shutdown(sockfd, SHUT_WR) < 0) {
+        LogError("shutdownWrite error");
+    }
+}
+
+bool sockets::isSelfConnect(int sockfd) {
+    struct sockaddr_in localAddr = getLocalAddr(sockfd);
+    struct sockaddr_in peerAddr = getPeerAddr(sockfd);
+    return localAddr.sin_port == peerAddr.sin_port && localAddr.sin_addr.s_addr == peerAddr.sin_addr.s_addr;
 }

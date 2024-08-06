@@ -13,12 +13,19 @@ namespace sockets{
     void listenOrDie(int sockfd);
     int accept(int sockfd, struct sockaddr_in* addr);
     void close(int sockfd);
+    int connect(int sockfd, const struct sockaddr_in& addr);
 
     void setNonBlockAndCloseOnExec(int sockfd);
 
     struct sockaddr_in getLocalAddr(int sockfd);
 
+    struct sockaddr_in getPeerAddr(int sockfd);
+
     int getSocketError(int sockfd);
+
+    void shutdownWrite(int sockfd);
+
+    bool isSelfConnect(int sockfd);
 
 } // namespace sockets
 } // namespace mars

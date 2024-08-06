@@ -18,6 +18,10 @@ public:
 
     void setReuseAddr(bool on) const;
 
+    void setTcpNoDelay(bool on);
+
+    void shutdownWrite() const;
+
 private:
     const int m_sockfd;
 };

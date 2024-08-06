@@ -120,6 +120,10 @@ TimerId EventLoop::runEvery(double interval, const TimerCallback& cb){
     return m_timerQueue->addTimer(cb, time, interval);
 }
 
+void EventLoop::cancel(TimerId timerId){
+    return m_timerQueue->cancel(timerId);
+}
+
 // 将不在loop线程的任务放回loop线程执行
 void EventLoop::runInLoop(const Functor& cb) {
     if(isInLoopThread()){
