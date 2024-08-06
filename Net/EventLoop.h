@@ -20,7 +20,7 @@ namespace mars {
 namespace net {
 
 class Channel;
-class Poller;
+class EPoller;
 class TimerId;
 class TimerQueue;
 
@@ -68,7 +68,7 @@ private:
     bool m_looping;
     bool m_quit;
     const pid_t m_threadId;
-    std::unique_ptr<Poller> m_poller;
+    std::unique_ptr<EPoller> m_poller;
     std::unique_ptr<TimerQueue> m_timerQueue;
     ChannelList m_activeChannels;
     bool m_callingPendingFunctors;

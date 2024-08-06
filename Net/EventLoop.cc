@@ -1,11 +1,12 @@
 #include "EventLoop.h"
 #include "../Log/mars_logger.h"
 #include "TimerQueue.h"
-#include "Poller.h"
+#include "EPoller.h"
 #include "Channel.h"
 #include <assert.h>
 #include <cstdlib>
 #include <sys/eventfd.h>
+#include <signal.h>
 
 using namespace mars::net;
 
@@ -21,12 +22,23 @@ static int createEventfd() {
     return evtfd;
 }
 
+class IgnoreSigPipe
+{
+public:
+    IgnoreSigPipe()
+    {
+        ::signal(SIGPIPE, SIG_IGN);
+    }
+};
+
+IgnoreSigPipe initObj;
+
 EventLoop::EventLoop() 
-  : m_looping(false), 
+    : m_looping(false), 
     m_quit(false),
     m_callingPendingFunctors(false),
     m_threadId(gettid()), 
-    m_poller(new Poller(this)),
+    m_poller(new EPoller(this)),
     m_timerQueue(new TimerQueue(this)),
     m_wakeupFd(createEventfd()),
     m_wakeupChannel(new Channel(this, m_wakeupFd))
@@ -67,7 +79,7 @@ void EventLoop::loop() {
     assertInLoopThread();
     m_looping = true;
     m_quit = false;
-    
+
     while (!m_quit) {
         m_activeChannels.clear();
         m_pollReturnTime = m_poller->poll(kPollTimeMs, &m_activeChannels);

@@ -27,6 +27,9 @@ public:
     void restart();
     void stop();
 
+    const InetAddress& serverAddress() const { return m_serverAddr; }
+
+
 private:
     enum States {kDisconnected, kConnecting, kConnected};
     static const int kMaxRetryDelayMs = 30*1000;
