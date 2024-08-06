@@ -21,23 +21,32 @@ public:
     const std::string& name() const { return m_name;}
     const InetAddress& localAddress() const { return m_localAddr;}
     const InetAddress& peerAddress() const { return m_peerAddr;}
-    bool connected() const { return m_state == KConnected;}
+    bool connected() const { return m_state == kConnected;}
 
     void setConnectionCallback(const ConnectionCallback& cb){ m_connectionCallback = cb;}
     void setMessageCallback(const MessageCallback& cb){ m_messageCallback = cb;}
+    void setWriteCompleteCallback(const WriteCompleteCallback& cb){ m_writeCompleteCallback = cb;}
     void setCloseCallback(const CloseCallback& cb){ m_closeCallback = cb;}
 
     void connectEstablished();
 
     void connectDestroyed();
+
+    void send(const std::string& message);
+
+    void shutdown();
+    void setTcpNoDelay(bool on);
+
 private:
-    enum StateE { kConnecting, KConnected, KDisconnected };
+    enum StateE { kConnecting, kConnected, kDisconnecting, kDisconnected };
 
     void setState(StateE s){ m_state = s;}
     void handleRead(base::Timestamp receiveTime);
     void handleWrite();
     void handleClose();
     void handleError();
+    void sendInLoop(const std::string& messafe);
+    void shutdownInLoop();
 
     EventLoop* m_loop;
     std::string m_name;
@@ -48,8 +57,10 @@ private:
     InetAddress m_peerAddr;
     ConnectionCallback m_connectionCallback;
     MessageCallback m_messageCallback;
+    WriteCompleteCallback m_writeCompleteCallback;
     CloseCallback m_closeCallback;
     Buffer m_inputBuffer;
+    Buffer m_outputBuffer;
 };
 
 } //namespace net
