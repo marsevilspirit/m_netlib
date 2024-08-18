@@ -174,7 +174,7 @@ void EventLoop::doPendingFunctors(){
     }
 
     for(auto& functor : functors){
-        LogTrace("doing functor");
+        LogTrace("doing pending functor");
         functor();
     }
 

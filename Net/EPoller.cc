@@ -50,7 +50,7 @@ base::Timestamp EPoller::poll(int timeoutMs, ChannelList* activeChannels)
     } else if (numEvents == 0) {
         LogDebug("EPoller::poll() nothing happened");
     } else {
-        LogError("EPoller::poll()");
+        LogError("EPoller::poll() error: {}", strerror(errno));
     }
     return now;
 }
@@ -69,7 +69,6 @@ void EPoller::updateChannel(Channel* channel)
 {
     assertInLoopThread();
     const int index = channel->index();
-    LogDebug("fd = %d events = %d index = %d", channel->fd(), channel->events(), index);
     if (index == kNew || index == kDeleted) {
         int fd = channel->fd();
         if (index == kNew) {

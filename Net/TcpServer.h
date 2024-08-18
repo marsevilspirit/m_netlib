@@ -40,10 +40,10 @@ private:
 
     typedef std::map<std::string, TcpConnectionPtr> ConnectionMap;
 
-    EventLoop* m_loop;
+    EventLoop* m_loop; //main loop
     const std::string m_name;
     std::unique_ptr<Acceptor> m_acceptor;
-    std::shared_ptr<EventLoopThreadPool> m_threadPool;
+    std::shared_ptr<EventLoopThreadPool> m_threadPool; // sub loops
 
     ConnectionCallback m_connectionCallback;
     MessageCallback m_messageCallback;
