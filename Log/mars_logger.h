@@ -3,17 +3,14 @@
 
 #include <iostream>
 #include <string>
-#include <json/json.h>
 #include <fstream>
 #include <mutex>
 #include <filesystem>
 #include <fmt/core.h>
 #include <unordered_map>
-#include <chrono>
-#include <sstream>
-#include <iomanip>
+#include <array>
+#include <cstdlib>
 
-#define LOG_CONFIG_PATH "../Log/logconf.json"
 #define RED "\033[31m"
 #define GREEN "\033[32m"
 #define YELLOW "\033[33m"
@@ -74,13 +71,20 @@ public:
             return;
         }
 
-        std::string log = LogHead(level) + fmt::format(fmt, args...) + LogDetail(file_name, func_name, line_no);
+        std::string log;
+
+        try{
+            log = LogHead(level) + fmt::format(fmt, args...) + LogDetail(file_name, func_name, line_no);
+        } catch (const std::exception& e) {
+            std::cerr << "\033[31mError in log format: " << e.what() << " in " << file_name << " at " << func_name << " line " << line_no << "\033[0m\n";
+            return;
+        }
 
         {
             std::lock_guard<std::mutex> lock(log_mutex); // 加锁以确保线程安全
 
             if (Terminal) {
-                std::cout << log << '\n'; 
+                std::cout << colorizeLog(level, log) << '\n'; 
             }
 
             if (File) {
@@ -93,30 +97,47 @@ private:
     LoggerConfig loggerConfig;
     static std::unique_ptr<MarsLogger> single_instance;
     static std::mutex mtx;
-     std::mutex log_mutex; // 保护日志输出的互斥量
+    std::mutex log_mutex; // 保护日志输出的互斥量
     std::unordered_map<LogLevel, bool> fileCoutMap;
     std::unordered_map<LogLevel, bool> terminalCoutMap;
     std::ofstream output_file;
     std::unordered_map<LogLevel, std::string> logLevelMap {
-        {LogLevel::FATAL, RED "FATAL" RESET},
-        {LogLevel::ERROR, RED "ERROR" RESET},
-        {LogLevel::WARN, YELLOW "WARN " RESET},
-        {LogLevel::INFO, WHITE "INFO " RESET},
-        {LogLevel::DEBUG, WHITE "DEBUG" RESET},
-        {LogLevel::TRACE, WHITE "TRACE" RESET}
+        {LogLevel::FATAL, "FATAL"},
+        {LogLevel::ERROR, "ERROR"},
+        {LogLevel::WARN, "WARN "},
+        {LogLevel::INFO, "INFO "},
+        {LogLevel::DEBUG, "DEBUG"},
+        {LogLevel::TRACE, "TRACE"}
     };
 
     MarsLogger();
+
+    // 添加颜色到日志文本
+    std::string colorizeLog(LogLevel level, const std::string& log) {
+        switch (level) {
+            case LogLevel::FATAL:
+            case LogLevel::ERROR:
+                return RED + log + RESET;
+            case LogLevel::WARN:
+                return YELLOW + log + RESET;
+            case LogLevel::INFO:
+            case LogLevel::DEBUG:
+            case LogLevel::TRACE:
+                return WHITE + log + RESET;
+            default:
+                return log;
+        }
+    }
 };
 
 }
 
-#define LogInfo(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::INFO, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
-#define LogWarn(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::WARN, YELLOW fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
-#define LogError(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::ERROR, RED fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
-#define LogFatal(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::FATAL, RED fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
-#define LogDebug(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::DEBUG, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
-#define LogTrace(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::TRACE, WHITE fmt RESET, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogInfo(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::INFO,  fmt, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogWarn(fmt, ...)   mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::WARN,  fmt, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogError(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::ERROR, fmt, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogFatal(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::FATAL, fmt, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogDebug(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::DEBUG, fmt, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
+#define LogTrace(fmt, ...)  mars::MarsLogger::getInstance()->_log_impl(mars::LogLevel::TRACE, fmt, __FILE__, __func__, __LINE__, ##__VA_ARGS__);
 
 #endif
 
