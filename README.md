@@ -11,6 +11,20 @@
 
 
 
+#### Base模块
+
+
+
+##### Timestamp类
+
+Timestamp 使用 64 位整数来表示时间，单位是微秒（microsecond）。这样可以精确到亚秒级别，而不仅仅是秒级别的时间表示。
+
+这种高精度对于网络编程中的事件计时、日志记录等场景非常重要，能够准确记录事件发生的顺序和间隔。
+
+将时间进行包装，提供成员函数，简化时间比较。
+
+
+
 #### Net模块
 
 
@@ -61,3 +75,53 @@ void EventLoop::loop() {
 }
 ```
 
+
+
+##### Acceptor类
+
+Acceptor用于接受新用户连接并分发连接给SubReactor（Sub EventLoop），封装了服务器监听套接字fd以及相关处理方法。
+
+Acceptor 类，只在用于main EventLoop中，与 TcpServer 类配合使用，用来管理客户端连接。
+
+服务器的套接字就在这个类里创建并设置。
+
+
+
+##### buffer类
+
+Buffer 类的设计目标是提供一种能够高效处理数据读写、并且尽量减少内存分配与拷贝操作的机制。Buffer 类的内部结构类似于一个动态数组或环形缓冲区，可以自动扩展。
+
+核心成员std::vector<char> 通过vector的强大功能实现智能扩缩。
+
+通过readIndex，和writeIndex控制储存的空间。
+
+
+
+##### TcpConnection类
+
+这个类主要封装了一个已建立的TCP连接，以及控制该TCP连接的方法（连接建立和关闭和销毁），以及该连接发生的各种事件（读/写/错误/连接）对应的处理函数，以及这个TCP连接的服务端和客户端的套接字地址信息等。
+
+TcpConnection用于Sub EventLoop中，对连接套接字fd及其相关方法进行封装（读消息事件、发送消息事件、连接关闭事件、错误事件等）。
+
+智能指针管理TcpConnection的原因:
+
+- TcpConnection会和用户直接交互，用户可能会手欠删除。
+
+- TcpConnection对象的多线程安全问题
+
+
+
+##### TimerQueue类
+
+虽然TimerQueue中有Queue，但是其实现时基于Set的，而不是Queue，set中存储的是pair类型，那么默认先按照pair的第一个元素排序，如果相同，再按照第二个元素排序。这样可以高效地插入、删除定时器，且找到当前已经超时的定时器。TimerQueue的public接口只有两个，添加和删除。
+
+```c++
+void addTimerInLoop(Timer* timer);
+void cancelInLoop(TimerId timerId);
+```
+
+定时器管理类，其中timer类就是TimerQueue需要管理的元素，而timerId就是一个简单的timer封装，避免销毁和创建操作
+
+但是要注意的是timer并没有自己计时的功能，所以需要依靠timerfd这个系统函数统一计时timerfd是一个系统计时函数，当所设置的时间到了，会通过timerfd这个文件描述符进行提示通信。
+
+timerfd每次都设置在计时器列表中到期时间最近的那个到期时间，这样timerfd到期以后，也就是最近的那个计时器到期，所以每次都是手动重置timerfd的计时时间，为最近的计时器到期时间

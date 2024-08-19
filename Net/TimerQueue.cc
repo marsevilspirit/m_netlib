@@ -69,7 +69,7 @@ TimerQueue::TimerQueue(EventLoop* loop)
     m_callingExpiredTimers(false)
 {
     m_timerfdChannel.setReadCallback(std::bind(&TimerQueue::handleRead, this));
-    m_timerfdChannel.enableReading();
+    m_timerfdChannel.enableReading();//加入poller监听
 }
 
 TimerId TimerQueue::addTimer(const TimerCallback cb, Timestamp when, double interval){
@@ -88,6 +88,7 @@ void TimerQueue::addTimerInLoop(Timer* timer) {
     m_loop->assertInLoopThread();
     bool earliestChanged = insert(timer);
 
+    //如果最早的定时器发生变化, 则重置 timerfd
     if(earliestChanged){
         resetTimerfd(m_timerfd, timer->expiration());
     }

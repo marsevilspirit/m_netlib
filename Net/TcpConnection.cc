@@ -19,6 +19,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name, int sockf
 {
     LogInfo("TcpConnection::ctor[{}] at {} fd = {}", m_name, m_localAddr.toHostPort(), sockfd);
     m_channel->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
+    m_channel->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
     m_channel->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
     m_channel->setErrorCallback(std::bind(&TcpConnection::handleError, this));
 }
